@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# このスクリプトはGitHubへのプッシュを支援します
+
+echo "=== GitHubリポジトリへのプッシュ手順 ==="
+echo ""
+echo "1. GitHubにログインして、新しいリポジトリを作成してください"
+echo "   https://github.com/new"
+echo ""
+echo "   リポジトリ名の例: mirai-baton"
+echo "   説明: 企業価値シミュレーションツール"
+echo "   Public/Private: お好みで選択"
+echo "   ✓ 「Add a README file」はチェックを外す（既にREADME.mdがあるため）"
+echo ""
+echo "2. リポジトリを作成したら、表示されるURLをコピーしてください"
+echo "   例: https://github.com/YOUR_USERNAME/mirai-baton.git"
+echo ""
+echo "3. 以下のコマンドを実行してください："
+echo ""
+echo "cd /Users/kota0712/Downloads/corporate-analyzer"
+echo "git init"
+echo "git add ."
+echo "git commit -m \"Initial commit: Mirai Baton\""
+echo "git branch -M main"
+echo "git remote add origin YOUR_GITHUB_REPO_URL"
+echo "git push -u origin main"
+echo ""
+echo "※ YOUR_GITHUB_REPO_URL は手順2でコピーしたURLに置き換えてください"
