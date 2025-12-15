@@ -21,9 +21,6 @@ export const ValuationBridgeChart = ({ current, projected, label }) => {
             <div className="flex h-64 w-full">
                 {/* Y-Axis Column */}
                 <div className="flex flex-col justify-between h-full pr-3 border-r border-gray-600/50 text-right w-16 text-xs text-gray-400 font-mono">
-                    {/* Reverse order for flex-col top-to-bottom rendering if using proper positioning, but here we can rely on absolute positioning for grid lines or just distribute these labels. 
-                        Better approach: layout relative container for chart and absolute labels.
-                    */}
                     <div className="relative h-full w-full">
                         {ticks.map((tick, i) => (
                             <div key={i} className="absolute right-0 flex items-center justify-end w-max" style={{ bottom: `${(tick / maxVal) * 100}%`, transform: 'translateY(50%)' }}>
@@ -40,9 +37,9 @@ export const ValuationBridgeChart = ({ current, projected, label }) => {
                         <div key={i} className="absolute w-full border-t border-gray-700/30" style={{ bottom: `${(tick / maxVal) * 100}%` }}></div>
                     ))}
 
-                    <div className="absolute inset-0 flex items-end justify-around px-2">
+                    <div className="absolute inset-0 flex items-end justify-around">
                         {/* Current Bar */}
-                        <div className="flex flex-col items-center gap-2 w-1/4 group relative h-full justify-end">
+                        <div className="flex flex-col items-center w-1/4 group relative h-full justify-end">
                             <div className="w-full bg-slate-600 rounded-t-md transition-all hover:opacity-90 border border-slate-500 relative group-hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                                 style={{ height: `${getHeightPct(currentM)}%` }}>
                                 {/* Label above the bar, aligned left to avoid overlap */}
@@ -52,11 +49,14 @@ export const ValuationBridgeChart = ({ current, projected, label }) => {
                                     </span>
                                 </div>
                             </div>
-                            <span className="text-xs text-gray-400 font-bold tracking-wider mt-2 border-t border-gray-600 pt-1 w-full text-center">現在</span>
+                            {/* Label below the chart */}
+                            <div className="absolute -bottom-8 left-0 right-0">
+                                <span className="text-xs text-gray-400 font-bold tracking-wider border-t border-gray-600 pt-1 w-full text-center block">現在</span>
+                            </div>
                         </div>
 
                         {/* Bridge / Arrow Section */}
-                        <div className="flex flex-col items-center justify-end w-1/4 h-full relative pb-8">
+                        <div className="flex flex-col items-center justify-end w-1/4 h-full relative">
                             {/* Dashed connector from Current Top */}
                             <div className="absolute border-t-2 border-dashed border-gray-500/50 w-[150%] -left-[25%]"
                                 style={{ bottom: `${getHeightPct(currentM)}%` }}></div>
@@ -69,12 +69,16 @@ export const ValuationBridgeChart = ({ current, projected, label }) => {
                                     </div>
                                 </div>
                             </div>
-                            <MoveRight className="w-6 h-6 text-gray-400 mb-[10%]" />
-                            <span className="text-xs text-emerald-400 font-bold mt-2">Grow</span>
+                            <MoveRight className="w-6 h-6 text-gray-400 absolute bottom-4" />
+                            {/* Label below the chart */}
+                            <div className="absolute -bottom-8 left-0 right-0">
+                                <span className="text-xs text-emerald-400 font-bold block text-center">Grow</span>
+                            </div>
                         </div>
 
+
                         {/* Projected Bar */}
-                        <div className="flex flex-col items-center gap-2 w-1/4 group relative h-full justify-end">
+                        <div className="flex flex-col items-center w-1/4 group relative h-full justify-end">
                             {/* Base part (Current level) - Optional visualization */}
 
                             {/* Full Height with Gradient */}
@@ -91,7 +95,10 @@ export const ValuationBridgeChart = ({ current, projected, label }) => {
                                     </span>
                                 </div>
                             </div>
-                            <span className="text-xs text-indigo-300 font-bold tracking-wider mt-2 border-t border-gray-600 pt-1 w-full text-center">成長後</span>
+                            {/* Label below the chart */}
+                            <div className="absolute -bottom-8 left-0 right-0">
+                                <span className="text-xs text-indigo-300 font-bold tracking-wider border-t border-gray-600 pt-1 w-full text-center block">成長後</span>
+                            </div>
                         </div>
                     </div>
                 </div>

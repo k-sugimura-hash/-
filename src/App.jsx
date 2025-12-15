@@ -225,6 +225,7 @@ import TamSamSomChart from './components/charts/TamSamSomChart';
 
 import { DIAGNOSTIC_QUESTIONS, MOCK_DATA, MOCK_GROWTH_PLAN } from './constants/data';
 import { SYSTEM_PROMPT, GROWTH_PLAN_SYSTEM_PROMPT } from './constants/prompts';
+import { estimateExecutiveComp } from './utils/calculations';
 
 export default function App() {
     // --- State Management ---
@@ -289,6 +290,44 @@ export default function App() {
             { label: "組織", value: Math.max(0, Math.min(100, (catC + 10) * 5)) },
             { label: "管理", value: Math.max(0, Math.min(100, (catD + 10) * 6.6)) }
         ];
+    };
+
+    // Calculate actual valuation using the same logic as ValuationResult
+    const calculateActualValuation = () => {
+        const netAssets = parseFloat(formData.netAssets) || 0;
+        const opProfit = parseFloat(formData.operatingProfit) || 0;
+        const executiveComp = parseFloat(formData.executiveComp) || 0;
+        const taxSavingInsurance = parseFloat(formData.taxSavingInsurance) || 0;
+        const insuranceReserve = parseFloat(formData.insuranceReserve) || 0;
+        const inventory = parseFloat(formData.inventory) || 0;
+        const sales = parseFloat(formData.sales) || 0;
+        const employeesNum = parseInt(formData.employees) || 0;
+
+        // Adjustments
+        const hasBadInventory = formData.badInventory;
+        const hasUnpaidOvertime = formData.unpaidOvertime;
+        const hasPrivateExpenses = formData.privateExpenses;
+
+        const inventoryAdjustment = hasBadInventory ? inventory * -0.3 : 0;
+        const insuranceAdjustment = insuranceReserve > 0 ? insuranceReserve * -0.15 : 0;
+        const laborLiabilityRisk = hasUnpaidOvertime ? employeesNum * 600 : 0;
+
+        const totalAssetAdjustments = inventoryAdjustment + insuranceAdjustment - laborLiabilityRisk;
+        const adjustedNetAssets = netAssets + totalAssetAdjustments;
+
+        // Normalized Earnings - Use actual estimateExecutiveComp function
+        // Import at top: import { estimateExecutiveComp } from './utils/calculations';
+        const estimatedComp = estimateExecutiveComp(sales);
+        const excessExecComp = Math.max(0, executiveComp - estimatedComp);
+        const privateExpenseAddBack = hasPrivateExpenses ? sales * 0.01 : 0;
+        const normalizedEarnings = opProfit + excessExecComp + taxSavingInsurance + privateExpenseAddBack;
+
+        // Evaluation Years
+        const evaluationYears = calculateCurrentValuationYears();
+
+        // Valuation
+        const valuation = adjustedNetAssets + (normalizedEarnings * evaluationYears);
+        return valuation;
     };
 
     // Robust API Call Helper with Retry
@@ -1384,6 +1423,7 @@ export default function App() {
                                     loading={isGeneratingPlan}
                                     currentFinancials={formData}
                                     currentYears={calculateCurrentValuationYears()}
+                                    currentValuation={calculateActualValuation()}
                                 />
                             </div>
 

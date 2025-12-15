@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, CheckSquare, Zap, DollarSign, Activity, MoveRight, ArrowUpRight } from 'lucide-react';
 import { ValuationBridgeChart } from '../charts/ValuationBridgeChart';
 import { Card } from '../ui/BasicComponents';
+import { estimateExecutiveComp } from '../../utils/calculations';
 
-export const GrowthPlanSection = ({ plan, loading, currentFinancials, currentYears }) => {
+export const GrowthPlanSection = ({ plan, loading, currentFinancials, currentYears, currentValuation }) => {
     const [selectedValuationPlans, setSelectedValuationPlans] = useState(new Set());
     const [selectedProfitPlans, setSelectedProfitPlans] = useState(new Set());
 
@@ -39,15 +40,53 @@ export const GrowthPlanSection = ({ plan, loading, currentFinancials, currentYea
 
     const addedYears = Array.from(selectedValuationPlans).reduce((acc, idx) => acc + (plan.valuation_plan[idx].year_impact || 0), 0);
     const profitIncreasePercent = Array.from(selectedProfitPlans).reduce((acc, idx) => acc + (plan.profit_strategy[idx].profit_impact_percent || 0), 0);
-    // Growth Plan uses simplified "Current Valuation" for baseline to show improvement delta clearly
-    // Using the basic Net Assets + OpProfit * Years for the simulator baseline to keep it simple
-    const currentOp = parseFloat(currentFinancials.operatingProfit) || 0;
-    const netAssets = parseFloat(currentFinancials.netAssets) || 0;
 
-    const newOp = currentOp * (1 + profitIncreasePercent / 100);
+    // Use actual valuation from ValuationResult calculation
+    const baseValuation = currentValuation || 0;
+
+    // Get financial data
+    const netAssets = parseFloat(currentFinancials.netAssets) || 0;
+    const opProfit = parseFloat(currentFinancials.operatingProfit) || 0;
+    const executiveComp = parseFloat(currentFinancials.executiveComp) || 0;
+    const taxSavingInsurance = parseFloat(currentFinancials.taxSavingInsurance) || 0;
+    const insuranceReserve = parseFloat(currentFinancials.insuranceReserve) || 0;
+    const inventory = parseFloat(currentFinancials.inventory) || 0;
+    const sales = parseFloat(currentFinancials.sales) || 0;
+    const employeesNum = parseInt(currentFinancials.employees) || 0;
+
+    // Flags
+    const hasBadInventory = currentFinancials.badInventory;
+    const hasUnpaidOvertime = currentFinancials.unpaidOvertime;
+    const hasPrivateExpenses = currentFinancials.privateExpenses;
+
+    // Calculate Adjusted Net Assets (same as ValuationResult)
+    const inventoryAdjustment = hasBadInventory ? inventory * -0.3 : 0;
+    const insuranceAdjustment = insuranceReserve > 0 ? insuranceReserve * -0.15 : 0;
+    const laborLiabilityRisk = hasUnpaidOvertime ? employeesNum * 600 : 0;
+    const totalAssetAdjustments = inventoryAdjustment + insuranceAdjustment - laborLiabilityRisk;
+    const adjustedNetAssets = netAssets + totalAssetAdjustments;
+
+    // Calculate Normalized Earnings (same as ValuationResult)
+    const estimatedComp = estimateExecutiveComp(sales);
+    const excessExecComp = Math.max(0, executiveComp - estimatedComp);
+    const privateExpenseAddBack = hasPrivateExpenses ? sales * 0.01 : 0;
+    const normalizedEarnings = opProfit + excessExecComp + taxSavingInsurance + privateExpenseAddBack;
+
+    // Apply growth factors
+    const newNormalizedEarnings = normalizedEarnings * (1 + profitIncreasePercent / 100);
     const newYears = currentYears + addedYears;
-    const newValuation = (newOp * newYears) + netAssets;
-    const currentValuation = (currentOp * currentYears) + netAssets;
+
+    // Calculate the delta (change) in valuation due to growth
+    // Current contribution from earnings: normalizedEarnings × currentYears
+    // New contribution from earnings: newNormalizedEarnings × newYears
+    // Delta = (newNormalizedEarnings × newYears) - (normalizedEarnings × currentYears)
+    const earningsDelta = (newNormalizedEarnings * newYears) - (normalizedEarnings * currentYears);
+
+    // New valuation = Current valuation + Delta
+    const newValuation = baseValuation + earningsDelta;
+
+
+
 
     return (
         <div className="mt-8 animate-fade-in-up">
@@ -171,15 +210,15 @@ export const GrowthPlanSection = ({ plan, loading, currentFinancials, currentYea
 
 
                                 {/* Updated: Waterfall Style Bridge Chart */}
-                                <ValuationBridgeChart current={currentValuation} projected={newValuation} />
+                                <ValuationBridgeChart current={baseValuation} projected={newValuation} />
 
                                 <div className="mt-6 space-y-3 pt-6 border-t border-gray-700">
 
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400">営業利益</span>
+                                        <span className="text-gray-400">正常収益力</span>
                                         <span className="font-mono text-emerald-400">
                                             {profitIncreasePercent > 0 && <span className="text-xs mr-2">↑{profitIncreasePercent}%</span>}
-                                            {Math.round(newOp).toLocaleString()}k
+                                            {Math.round(newNormalizedEarnings).toLocaleString()}k
                                         </span>
                                     </div>
 
@@ -204,7 +243,7 @@ export const GrowthPlanSection = ({ plan, loading, currentFinancials, currentYea
 
                                     <p className="text-xs text-emerald-500 mt-2 flex items-center gap-1">
                                         <ArrowUpRight className="w-3 h-3" />
-                                        Current比: +{Math.round(newValuation - currentValuation).toLocaleString()} 千円
+                                        Current比: +{Math.round(newValuation - baseValuation).toLocaleString()} 千円
 
                                     </p>
                                 </div>
